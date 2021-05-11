@@ -21,8 +21,8 @@ parser$add_argument("--csaw", required=F, action="store_true", default=FALSE, he
 parser$add_argument("--starrpeaker", required=F, action='store_true', default=FALSE, help="Specify if STARRPeaker package will be used for enhancer call")
 parser$add_argument("--bin", required=F, action='store_true', default=FALSE, help="Specify if fragments need to be binned")
 parser$add_argument('-s', "--size", required=F, default=50, type="integer", help="Specify bin size")
-parser$add_argument('--o', required=F, action="store_true", default=FALSE, help="Specify if orientation needs to be separated")
-parser$add_argument("-o", "--outfile", required=F, help="Output filename")
+#parser$add_argument('--ori', required=F, action="store_true", default=FALSE, help="Specify if orientation needs to be separated")
+parser$add_argument("-o", "--outfile", required=T, help="Output filename")
 parser$add_argument("--minFragmentLength", required=F, default = -1, type="integer", help="Specify the minimum size of fragments")
 parser$add_argument("--maxFragmentLength", required=F, default = -1, type="integer", help="Specify the maximum size of fragments")
 
@@ -93,7 +93,7 @@ for( i in 1:length(args$input) ){
                                start.field="Start",
                                end.field=c("End", "stop"),
                                strand.field="Strand",
-                               starts.in.df.are.0based=FALSE)
+                               starts.in.df.are.0based=FALSE) # should they?
     colnames(mcols(x)) = c(sample)
     
     # Filter fragments based on size
@@ -116,22 +116,22 @@ if(args$bin){
     # Convert binned fragments count GRanges to dataframe for each replicate 
     for( i in 1:length(colnames(mcols(binned_frag_count)))){
         sample = colnames(mcols(binned_frag_count))[i]
-        seqlib = binned_frag_count$sample
-        
-        seqlib = as.data.frame(seqlib)
-        cols_to_add = data.frame(name=paste0(seqlib$seqnames,"_", seqlib$start,"_",seqlib$end), 
-                         score = pmin(seqlib$count,1000), 
+        seqlib = mcols(binned_frag_count)[, sample]
+        tmp = binned_frag_count
+        mcols(tmp) = seqlib
+        seqlib = as.data.frame(tmp) 
+        seqlib = seqlib[, c(1,2,3,5,6)]
+        colnames(seqlib) = c('chr','start','end', 'strand', 'count')
+
+        cols_to_add = data.frame(name=paste0(seqlib$chr,"_", seqlib$start,"_",seqlib$end), 
+                         score = '.', 
                          barcode = '.')
-        
+
         seqlib_df = cbind(seqlib, cols_to_add)
-        col_order = c('seqnames','start','end','name','score','strand','count','barcode')
-        seqlib_df = selib_df[, col_order]
+        col_order = c('chr','start','end','name','score','strand','count','barcode')
+        seqlib_df = seqlib_df[, col_order]
         
         # Save
         write.table(seqlib_df, file=paste0(args$outfile[i]), quote=FALSE, sep='\t');
     }
 }
-
-
-
-
