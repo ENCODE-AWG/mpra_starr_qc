@@ -15,7 +15,6 @@ main_wrap = function(raw_DNA_folder, raw_RNA_folder, threshold.reads=-Inf,
   # element - column 4 (aka sequence, oligo, insert, tile...)
   
   # find files
-  if(missing("output.name")) stop("Argument 'output.name' is missing!")
   raw_DNA_files = list.files(raw_DNA_folder, pattern = '.bed(.gz)?',full.names = T)
   raw_RNA_files = list.files(raw_RNA_folder, pattern = '.bed(.gz)?',full.names = T)
   
@@ -153,21 +152,21 @@ main_wrap = function(raw_DNA_folder, raw_RNA_folder, threshold.reads=-Inf,
 
   ### make correlation plots (RNA,DNA,ratios)
   # suppressing warnings because of pairwise incomplete observations
-  pl1 = complete_ratios %>% 
+  pl.RNA = complete_ratios %>% 
     select(label,RNA.norm,name) %>% 
     spread(label,RNA.norm) %>% 
     select(-name) %>% 
-    ggpairs(title = "DNA RPM correlation")
+    ggpairs(title = "RNA RPM correlation")
   suppressWarnings(ggsave(file.path(output.dir, "cor_RNA.png"),pl1,w=7,h=7))
   
-  pl2 = complete_ratios %>% 
+  pl.DNA = complete_ratios %>% 
     select(label,DNA.norm,name) %>% 
     spread(label,DNA.norm) %>% 
     select(-name) %>% 
-    ggpairs(title = "RNA RPM correlation")
+    ggpairs(title = "DNA RPM correlation")
   suppressWarnings(ggsave(file.path(output.dir, "cor_DNA.png"),pl2,w=7,h=7))
   
-  pl3 = complete_ratios %>% 
+  pl.ratio = complete_ratios %>% 
     select(label,log.ratio,name) %>% 
     spread(label,log.ratio) %>% 
     select(-name) %>% 
@@ -191,7 +190,6 @@ parser$add_argument("-o", "--outfile", required=F,
 args <- parser$parse_args()
 # load libraries after successfully parsing the command-line arguments
 suppressPackageStartupMessages({
-    library(argparse)
     library(tidyverse)
     library(GGally)
 })
